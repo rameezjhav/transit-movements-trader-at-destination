@@ -40,7 +40,7 @@ class ArrivalIdRepository @Inject()(mongo: ReactiveMongoApi) {
   }
 
   private def collection: Future[JSONCollection] =
-    mongo.database.map(_.collection[JSONCollection](collectionName))
+    mongo.database.map(_.collection[JSONCollection](collectionName, FailoverStrategies.exponentialBackoff))
 
   def nextId(): Future[ArrivalId] = {
 

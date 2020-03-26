@@ -45,7 +45,7 @@ class SequentialInterchangeControlReferenceIdRepository @Inject()(
   }
 
   private def collection: Future[JSONCollection] =
-    mongo.database.map(_.collection[JSONCollection](collectionName))
+    mongo.database.map(_.collection[JSONCollection](collectionName, FailoverStrategies.exponentialBackoff))
 
   override def nextInterchangeControlReferenceId(): Future[InterchangeControlReference] = {
 

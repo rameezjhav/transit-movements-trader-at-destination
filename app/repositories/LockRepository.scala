@@ -40,7 +40,7 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
   private val ttl = appConfig.lockRepositoryTtl
 
   private def collection: Future[JSONCollection] =
-    mongo.database.map(_.collection[JSONCollection](LockRepository.collectionName))
+    mongo.database.map(_.collection[JSONCollection](LockRepository.collectionName, FailoverStrategies.exponentialBackoff))
 
   private val createdIndex = Index(
     key = Seq("created" -> IndexType.Ascending),

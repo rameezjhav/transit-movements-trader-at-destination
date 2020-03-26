@@ -27,7 +27,6 @@ import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.Cursor
-import reactivemongo.api.commands.FindAndModifyCommand.UpdateLastError
 import reactivemongo.api.commands.WriteResult
 import reactivemongo.api.indexes.Index
 import reactivemongo.api.indexes.IndexType
@@ -58,7 +57,7 @@ class ArrivalMovementRepository @Inject()(cc: ControllerComponents, mongo: React
   private val collectionName = CollectionNames.ArrivalMovementCollection
 
   private def collection: Future[JSONCollection] =
-    mongo.database.map(_.collection[JSONCollection](collectionName))
+    mongo.database.map(_.collection[JSONCollection](collectionName, FailoverStrategies.exponentialBackoff))
 
   def insert(arrival: Arrival): Future[Unit] =
     collection.flatMap {
