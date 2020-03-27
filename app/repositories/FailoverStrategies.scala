@@ -24,8 +24,6 @@ object FailoverStrategies {
   val exponentialBackoff: FailoverStrategy = FailoverStrategy(
     initialDelay = 500 milliseconds,
     retries = 4,
-    delayFactor =
-      attempt =>
-        1 + (attempt * 0.5)
+    delayFactor = attempt => 1 + (attempt * 0.5)
   )
 }

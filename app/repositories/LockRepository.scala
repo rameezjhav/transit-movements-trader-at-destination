@@ -18,6 +18,8 @@ package repositories
 
 import java.time.LocalDateTime
 
+import akka.actor.ActorSystem
+import akka.pattern.after
 import config.AppConfig
 import javax.inject.Inject
 import models.request.ArrivalId
@@ -32,6 +34,7 @@ import reactivemongo.play.json.collection.JSONCollection
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(implicit ec: ExecutionContext) {
 
@@ -55,6 +58,16 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
       }
       .map(_ => ())
 
+  private val actorSystem = ActorSystem("LockRepositorySystem")
+  private val scheduler   = actorSystem.scheduler
+
+  private def retry(times: Int, delay: FiniteDuration = 500.milliseconds)(fn: => Future[Boolean]): Future[Boolean] =
+    fn.flatMap {
+      case true               => Future.successful(true)
+      case false if times > 1 => after(delay, scheduler)(retry(times - 1)(fn))
+      case _                  => Future.successful(false)
+    }
+
   def lock(arrivalId: ArrivalId): Future[Boolean] = {
 
     val lock = Json.obj(
@@ -62,13 +75,15 @@ class LockRepository @Inject()(mongo: ReactiveMongoApi, appConfig: AppConfig)(im
       "created" -> LocalDateTime.now
     )
 
-    collection.flatMap {
-      _.insert(ordered = false)
-        .one(lock)
-        .map(_ => true)
-    } recover {
-      case e: LastError if e.code.contains(documentExistsErrorCodeValue) =>
-        false
+    retry(3) {
+      collection.flatMap {
+        _.insert(ordered = false)
+          .one(lock)
+          .map(_ => true)
+      } recover {
+        case e: LastError if e.code.contains(documentExistsErrorCodeValue) =>
+          false
+      }
     }
   }
 
