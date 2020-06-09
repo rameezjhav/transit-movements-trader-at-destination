@@ -19,13 +19,21 @@ package controllers
 import controllers.actions.GetArrivalForWriteActionProvider
 import javax.inject.Inject
 import models.SubmissionProcessingResult._
-import models.{ArrivalRejectedResponse, GoodsReleasedResponse, MessageId, MessageResponse, MessageSender, MessageType, UnloadingPermissionResponse}
+import models.ArrivalRejectedResponse
+import models.GoodsReleasedResponse
+import models.MessageId
+import models.MessageResponse
+import models.MessageSender
+import models.MessageType
+import models.UnloadingPermissionResponse
 import play.api.Logger
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.Action
+import play.api.mvc.ControllerComponents
 import services.SaveMessageService
 import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.xml.NodeSeq
 
 class NCTSMessageController @Inject()(cc: ControllerComponents, getArrival: GetArrivalForWriteActionProvider, saveMessageService: SaveMessageService)(
@@ -50,7 +58,9 @@ class NCTSMessageController @Inject()(cc: ControllerComponents, getArrival: GetA
           val newState         = request.arrival.status.transition(response.messageReceived)
           val processingResult = saveMessageService.validateXmlAndSaveMessage(xml, messageSender, response, newState)
           processingResult map {
-            case SubmissionSuccess => Ok.withHeaders("Location" -> routes.MessagesController.getMessage(messageSender.arrivalId, MessageId.fromIndex(messageSender.messageCorrelationId)).url)
+            case SubmissionSuccess =>
+              Ok.withHeaders(
+                "Location" -> routes.MessagesController.getMessage(messageSender.arrivalId, MessageId.fromIndex(messageSender.messageCorrelationId)).url)
 
             case SubmissionFailureInternal =>
               val message = "Internal Submission Failure " + processingResult
