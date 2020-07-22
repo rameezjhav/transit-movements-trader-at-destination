@@ -119,7 +119,7 @@ class ArrivalMovementRepository @Inject()(mongo: ReactiveMongoApi, appConfig: Ap
     collection.flatMap {
       _.find(Json.obj("eoriNumber" -> eoriNumber), Option.empty[JsObject])
         .cursor[Arrival]()
-        .collect[Seq](-1, Cursor.FailOnError())
+        .collect[Seq](1000, Cursor.FailOnError())
     }
 
   def updateArrival[A](selector: ArrivalSelector, modifier: A)(implicit ev: ArrivalModifier[A]): Future[Try[Unit]] = {
